@@ -1,114 +1,27 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Análisis de Compras por RUBRO y TIPO DE GASTOS</title>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Análisis de Compras — CONFIPRES.EC</title>
 <style>
-  :root { --azul:#1F4E78; --gris:#f4f6f9; --borde:#d8dee6; }
-  * { box-sizing:border-box; font-family:'Segoe UI',Arial,sans-serif; }
-  body { margin:0; background:var(--gris); color:#222; }
-  header { background:var(--azul); color:#fff; padding:18px 28px; }
-  header h1 { margin:0; font-size:20px; }
-  header p { margin:4px 0 0; font-size:12px; opacity:.85; }
-  main { max-width:860px; margin:26px auto; padding:0 16px; }
-  .card { background:#fff; border:1px solid var(--borde); border-radius:8px;
-          padding:20px 24px; margin-bottom:18px; }
-  .card h2 { margin:0 0 12px; font-size:15px; color:var(--azul); }
-  button { background:var(--azul); color:#fff; border:0; border-radius:6px;
-           padding:10px 22px; font-size:14px; cursor:pointer; }
-  button:hover { background:#163a5c; }
-  button.sec { background:#5b7a99; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-          gap:12px; margin:12px 0; }
-  .kpi { background:var(--gris); border-radius:6px; padding:10px 14px; }
-  .kpi b { display:block; font-size:20px; color:var(--azul); }
-  .kpi span { font-size:11px; color:#555; }
-  .alerta { color:#a33; font-size:13px; }
-  ul.archivos { list-style:none; padding:0; margin:0; }
-  ul.archivos li { padding:7px 0; border-bottom:1px solid var(--borde); font-size:13px; }
-  ul.archivos a { color:var(--azul); text-decoration:none; font-weight:600; }
-  .acciones { display:flex; gap:12px; flex-wrap:wrap; }
-</style>
-</head>
-<body>
-<header style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-  <div>
-    <h1>ANÁLISIS DE COMPRAS POR RUBRO Y TIPO DE GASTOS</h1>
-    <p>CONFIPRES.EC · confipres.ec@gmail.com — Explota los productos de cada factura XML del SRI</p>
-  </div>
-  <a href="/salir" onclick="return confirm('¿Cerrar el sistema? La tarea se eliminará de la memoria.')">
-    <button type="button" style="background:#b03a2e">⏻ Cerrar sistema</button></a>
-</header>
-<main>
-
-  <div class="card">
-    <h2>1. Procesar carpeta de XML de compras</h2>
-    <p style="font-size:13px;color:#555">Seleccione la carpeta donde están los XML
-    (se recorren también las subcarpetas de año y mes).</p>
-    <p style="font-size:12px;margin-bottom:10px">
-      <a href="/rubros" style="color:#1F4E78;font-weight:600">⚙ Mantenimiento de la tabla de rubros</a>
-      &nbsp;·&nbsp;
-      <a href="/maestro" style="color:#1F4E78;font-weight:600">📦 Exportar maestro de productos</a>
-      &nbsp;·&nbsp;
-      <a href="/publicar" style="color:#1F4E78;font-weight:600">🌐 Publicar en GitHub (web del cliente)</a>
-      <span style="color:#8a94a3">(colóquelo junto al .exe del cliente y arranca preasignado)</span>
-    </p>
-    <form action="/procesar" method="post">
-      <button type="submit">📂 Seleccionar carpeta y procesar</button>
-    </form>
-  </div>
-
-  {% if resumen %}
-  <div class="card">
-    <h2>2. Resultado del procesamiento</h2>
-    <p style="font-size:12px;color:#777">Carpeta: {{ resumen.carpeta }}</p>
-    <div class="grid">
-      <div class="kpi"><b>{{ resumen.facturas }}</b><span>Facturas</span></div>
-      <div class="kpi"><b>{{ resumen.productos_filas }}</b><span>Líneas de producto</span></div>
-      <div class="kpi"><b>{{ resumen.productos_unicos }}</b><span>Productos únicos</span></div>
-      <div class="kpi"><b>${{ '%.2f'|format(resumen.total) }}</b><span>Total compras</span></div>
-    </div>
-    {% if resumen.pendientes %}
-      <p class="alerta">⚠ {{ resumen.pendientes }} producto(s) NO CLASIFICADOS pendientes.
-      Puede generar los Excel igualmente: saldrán como "NO CLASIFICADO" y podrá clasificarlos después.</p>
-    {% endif %}
-    {% if resumen.errores %}
-      <p class="alerta">{{ resumen.errores }} archivo(s) no se pudieron leer
-      (ver sistema.log).</p>
-    {% endif %}
-    {% if error_gen %}
-    <p class="alerta" style="background:#fdeceb;border-radius:8px;padding:10px 14px">
-      ⛔ {{ error_gen }}</p>
-    {% endif %}
-    <div class="acciones">
-      <a href="/clasificar"><button type="button" class="sec">🏷 Clasificar pendientes</button></a>
-      <a href="/revisar"><button type="button" class="sec">📝 Revisar asignados</button></a>
-      <a href="/revisar?confirmar=1"><button type="button" style="background:#b8860b">⚠ Por confirmar</button></a>
-      <a href="/detalle_productos"><button type="button" class="sec">🔍 Detalle por producto</button></a>
-      <a href="/facturas"><button type="button" class="sec">🧾 Revisar facturas</button></a>
-      <a href="/base"><button type="button" class="sec">📖 Consultar base</button></a>
-      <form action="/generar" method="post">
-        <button type="submit">📊 Generar Excel mes y acumulado</button>
-      </form>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if generados %}
-  <div class="card">
-    <h2>3. Archivos generados</h2>
-    <p style="margin-bottom:12px"><a href="/dashboard" target="_blank">
-      <button type="button" style="background:#E8B84B;color:#4a3608">🌐 Ver DASHBOARD interactivo</button></a></p>
-    <ul class="archivos">
-      {% for g in generados %}
-      <li><a href="/descargar/{{ loop.index0 }}">⬇ {{ g.split('\\')[-1].split('/')[-1] }}</a></li>
-      {% endfor %}
-    </ul>
-    <p style="font-size:12px;color:#777">Guardados en la subcarpeta
-    "ANALISIS RUBROS Y TIPO DE GASTO" dentro de la carpeta procesada.</p>
-  </div>
-  {% endif %}
-
-</main>
-</body>
-</html>
+*{box-sizing:border-box;margin:0;font-family:-apple-system,'Segoe UI',Arial,sans-serif}
+body{background:linear-gradient(140deg,#0e2a47,#1F4E78 60%,#2d6ba3);min-height:100vh;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.caja{background:#fff;border-radius:20px;padding:38px 34px;max-width:430px;width:100%;
+  text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.marca{font-size:11px;letter-spacing:3px;color:#b8860b;font-weight:800}
+h1{font-size:21px;color:#0e2a47;margin:8px 0 4px;line-height:1.25}
+p{font-size:12.5px;color:#67788c;margin-bottom:22px}
+a.btn{display:block;background:#1F4E78;color:#fff;text-decoration:none;font-weight:700;
+  padding:15px;border-radius:12px;margin-bottom:12px;font-size:15px}
+a.btn.sec{background:#E8B84B;color:#4a3608}
+.pie{font-size:10.5px;color:#8a94a3;margin-top:16px}
+</style></head><body>
+<div class="caja">
+  <div class="marca">CONFIPRES.EC &middot; confipres.ec@gmail.com</div>
+  <h1>ANÁLISIS DE COMPRAS<br>por RUBRO y TIPO DE GASTO</h1>
+  <p>Consulte sus movimientos desde cualquier dispositivo.</p>
+  <a class="btn" href="dashboard.html">📊 Ver DASHBOARD</a>
+  <a class="btn sec" href="base_productos.html">📖 Consulta: meses, productos, proveedores y facturas</a>
+  <div class="pie">Actualizado: 07/07/2026 08:59</div>
+</div>
+</body></html>
